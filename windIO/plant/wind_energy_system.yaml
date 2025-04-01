@@ -326,16 +326,27 @@ properties:
             description: name of the folder where the output files are written
             type: string
 
-          cases_run:
-            title: Handling of the timeseries runs
-            type: object
-            properties:
-              all_occurences:
-                title: active to run all the occurences from the time series
-                type: boolean
-              subset:
-                title: list of times to run
-                type: array
+            cases_run:
+              title: Handling of the timeseries runs
+              type: object
+              properties:
+                all_occurences:
+                  title: active to run all the occurences from the time series
+                  type: boolean
+              oneOf:
+                - properties:
+                    subset_times:
+                      title: list of times to run
+                      type: array
+                  required: ["subset_times"]
+                - properties:
+                    subset_speeds:
+                      title: list of speeds to run
+                      type: array
+                    subset_directions:
+                      title: list of directions to run
+                      type: array
+                  required: ["subset_speeds", "subset_directions"]
 
           turbine_outputs:
             title: outputs related to each turbine
