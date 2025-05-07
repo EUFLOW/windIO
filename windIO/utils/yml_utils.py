@@ -97,6 +97,31 @@ def enforce_no_additional_properties(schema):
     return schema
 
 
+def dict_to_netcdf(data_dict):
+    # Separate coordinate data from data variables
+    coords = {}
+    data_vars = {}
+    
+    # Process all dictionary keys
+    for key, value in data_dict.items():
+        # If value is a dict with 'dims' and 'data', it's a data variable
+        if isinstance(value, dict) and 'dims' in value and 'data' in value:
+            data_vars[key] = xr.DataArray(
+                data=value['data'],
+                dims=value['dims'],
+                attrs=value.get('attrs', {})
+            )
+        else:
+            # Assume other values are coordinate data
+            # To determine the dimension name, we need to infer it or have it stored elsewhere
+            coords[key] = value
+    
+    # Create a new Dataset
+    ds = xr.Dataset(data_vars=data_vars, coords=coords)
+    
+    return ds
+
+
 def validate_yaml(data_file, schema_file, loader=XrResourceLoader):
 
     def add_local_schemas_to(resolver, schema_folder, base_uri, schema_ext_lst=['.json', '.yaml', '.yml']):
