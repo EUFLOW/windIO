@@ -57,9 +57,9 @@ class XrResourceLoader(Loader):
                     return v
 
             def ds2yml(ds):
-                 d = ds.to_dict()
-                 return fmt({**{k: v['data'] for k, v in d['coords'].items()},
-                             **d['data_vars']})
+                d = ds.to_dict()
+                return fmt({**{k: v['data'] for k, v in d['coords'].items()},
+                            **d['data_vars']})
             return ds2yml(xr.open_dataset(filename))
 
 XrResourceLoader.add_constructor('!include', XrResourceLoader.include)
