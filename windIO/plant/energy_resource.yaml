@@ -83,6 +83,10 @@ properties:
         weibull_k:
             title: Weibull shape
             $ref: "common.yaml#/definitions/multi_dimensional_data"
+        speedup:
+            title: speedup factor
+            description: speedup relative to reference wind speed
+            $ref: "common.yaml#/definitions/multi_dimensional_data"
         sector_probability:
             title: probability of wind directions
             description: Probability of wind sector [0,1]
