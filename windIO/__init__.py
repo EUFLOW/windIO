@@ -17,7 +17,9 @@ import windIO.schemas
 
 from .examples import plant as plant_ex, turbine as turbine_ex
 from windIO.yaml import load_yaml, write_yaml
+from .validator import validate
 ### API design
+<<<<<<< HEAD
 
 def _enforce_no_additional_properties(schema):
     """Recursively set additionalProperties: false for all objects in the schema"""
@@ -184,3 +186,5 @@ def dict_to_netcdf(data_dict, output_filename=None):
     
     return ds
 
+=======
+>>>>>>> upstream/main
