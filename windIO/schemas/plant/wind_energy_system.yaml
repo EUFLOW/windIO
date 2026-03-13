@@ -51,7 +51,7 @@ properties:
               name:
                 title: Wake model name
                 type: string
-                enum: ["Jensen", "Jensen_1983", "NOJLocalDeficit", "Bastankhah2014", "Bastankhah2016", "Niayifar2016", "Zong2020",
+                enum: ["Jensen", "Jensen_1983", "Bastankhah2014", "Bastankhah2016", "Niayifar2016", "Zong2020",
                        "Carbajofuertes2018", "SuperGaussian", "SuperGaussian2023", "TurbOPark",
                        "TurboNOJ", "GCL", "FUGA"]
               wake_expansion_coefficient:
