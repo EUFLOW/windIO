@@ -18,6 +18,7 @@ attributes:
       ws_superposition: Linear
       ti_superposition: Linear
     rotor_averaging:
+      name: GQGrid
       n_x_grid_points: 5
       n_y_grid_points: 5
       background_averaging: center

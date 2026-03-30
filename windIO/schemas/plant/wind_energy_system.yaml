@@ -51,7 +51,9 @@ properties:
               name:
                 title: Wake model name
                 type: string
-                enum: ["Jensen", "Bastankhah2014", "Bastankhah2016", "TurbOPark", "SuperGaussian"]
+                enum: ["Jensen", "Jensen_1983", "Bastankhah2014", "Bastankhah2016", "Niayifar2016", "Zong2020",
+                       "Carbajofuertes2018", "SuperGaussian", "SuperGaussian2023", "TurbOPark",
+                       "TurboNOJ", "GCL", "FUGA"]
               wake_expansion_coefficient:
                 title: wake expansion coefficient
                 type: object
@@ -71,6 +73,12 @@ properties:
               use_effective_ws:
                 title: flag to use freestream wind speed for deficit computation
                 type: boolean
+              use_effective_ti:
+                title: flag to use effective turbulence intensity
+                type: boolean
+              A:
+                title: TurboNOJ wake expansion parameter
+                type: number
 
           axial_induction_model:
               title: axial induction model
@@ -85,7 +93,7 @@ properties:
               name:
                 title: Deflection model name
                 type: string
-                enum: ["None", "Jimenez", "Bastankhah2016"]
+                enum: ["None", "Jimenez", "Bastankhah2016", "GCLHill"]
               beta:
                 title: Jimenez deflection coefficient
                 type: number
@@ -102,9 +110,15 @@ properties:
                 enum: ["STF2005", "STF2017", "IEC-TI-2019", "CrespoHernandez", "GCL", "None"]
                 # Q: IEC versus Franson
                 # note: We assume same shape as wind deficit for now
-              coefficents:
+              coefficients:
                 title: coefficients
                 type: array
+              c1:
+                title: STF model coefficient 1
+                type: number
+              c2:
+                title: STF model coefficient 2
+                type: number
 
           superposition_model:
             title: Superposition model
@@ -114,17 +128,24 @@ properties:
               ws_superposition:
                 title: Speed superposition model name
                 type: string
-                enum: ["Linear", "Squared", "Max", "Product"]
+                enum: ["Linear", "Squared", "Max", "Product", "Weighted", "Cumulative"]
               ti_superposition:
                 title: TI superposition model name
                 type: string
-                enum: ["Linear", "Squared", "Max", "Product"]
+                enum: ["Linear", "Squared", "Max", "Product", "Weighted", "Cumulative"]
 
           rotor_averaging:
             title: Rotor average
             description: Rotor averaging model used in AEP calculations
             type: object
             properties:
+              name:
+                title: Rotor averaging model name
+                type: string
+                enum: ["Center", "Avg_Deficit", "EqGrid", "GQGrid", "PolarGrid", "CGI"]
+              n:
+                title: Number of grid or integration points
+                type: integer
               grid:
                 title: Grid type
                 type: string
@@ -156,7 +177,9 @@ properties:
               name:
                 title: Blockage model name
                 type: string
-                enum: ['None', 'RankineHalfBody', 'Rathmann', 'SelfSimilarityDeficit', 'SelfSimilarityDeficit2020']
+                enum: ['None', 'RankineHalfBody', 'Rathmann', 'SelfSimilarityDeficit',
+                       'SelfSimilarityDeficit2020', 'VortexCylinder', 'VortexDipole',
+                       'HybridInduction', 'FUGA']
               parameters:
                 title: Blockage Model Parameters
                 type: array
