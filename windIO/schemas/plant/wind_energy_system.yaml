@@ -66,15 +66,13 @@ properties:
                       type: number # (default 0)
                    free_stream_ti:
                       title: Flag deciding to use freestream or waked TI
+                      description: TI feeding the wake-expansion coefficient (k = k_a*TI + k_b) and TI-dependent deficits. False (default) = waked/effective TI; True = freestream TI.
                       type: boolean # (default to False)
               ceps:
                 title: Bastankhah c_epsilon factor
                 type: number
               use_effective_ws:
-                title: flag to use freestream wind speed for deficit computation
-                type: boolean
-              use_effective_ti:
-                title: flag to use effective turbulence intensity
+                title: flag to use local (effective) wind speed for deficit computation (True=waked, False=freestream)
                 type: boolean
               A:
                 title: TurboNOJ wake expansion parameter
@@ -113,6 +111,9 @@ properties:
               coefficients:
                 title: coefficients
                 type: array
+              c0:
+                title: STF/IEC model coefficient 0
+                type: number
               c1:
                 title: STF model coefficient 1
                 type: number
@@ -128,7 +129,7 @@ properties:
               ws_superposition:
                 title: Speed superposition model name
                 type: string
-                enum: ["Linear", "Squared", "Max", "Product", "Weighted", "Cumulative"]
+                enum: ["Linear", "Squared", "Max", "Product", "Weighted", "Cumulative", "Vector"]
               ti_superposition:
                 title: TI superposition model name
                 type: string
@@ -141,8 +142,16 @@ properties:
             properties:
               name:
                 title: Rotor averaging model name
+                description: >-
+                  Engine-neutral: center, grid (regular rotor grid / GridRotorAvg),
+                  eq_grid, gq_grid, polar_grid, cgi, gaussian_overlap, area_overlap.
+                  gaussian_overlap/area_overlap are non-node overlap models — NOT compatible
+                  with 'Weighted' superposition, which requires a node model (use grid).
+                  Capitalized names are deprecated aliases of the lowercase forms.
                 type: string
-                enum: ["Center", "Avg_Deficit", "EqGrid", "GQGrid", "PolarGrid", "CGI"]
+                enum: ["center", "grid", "eq_grid", "gq_grid", "polar_grid", "cgi",
+                       "gaussian_overlap", "area_overlap",
+                       "Center", "Avg_Deficit", "EqGrid", "GQGrid", "PolarGrid", "CGI"]
               n:
                 title: Number of grid or integration points
                 type: integer
