@@ -120,6 +120,14 @@ properties:
               c2:
                 title: STF model coefficient 2
                 type: number
+              c:
+                title: CrespoHernandez coefficients
+                description: >-
+                  Calibration coefficients [c0, c1, c2, c3] for the CrespoHernandez
+                  added-turbulence model. When given, the model is built with these
+                  coefficients (engine-specific), reproducing a paper's calibration
+                  (e.g. Niayifar/Zong); when omitted the engine default is used.
+                type: array
 
           superposition_model:
             title: Superposition model
@@ -143,13 +151,15 @@ properties:
               name:
                 title: Rotor averaging model name
                 description: >-
-                  Engine-neutral: center, grid (regular rotor grid / GridRotorAvg),
+                  Engine-neutral: none (no rotor-averaging model — rotor centre,
+                  the only non-node option 'Weighted' superposition accepts),
+                  center, grid (regular rotor grid / GridRotorAvg),
                   eq_grid, gq_grid, polar_grid, cgi, gaussian_overlap, area_overlap.
                   gaussian_overlap/area_overlap are non-node overlap models — NOT compatible
-                  with 'Weighted' superposition, which requires a node model (use grid).
-                  Capitalized names are deprecated aliases of the lowercase forms.
+                  with 'Weighted' superposition, which requires a node model (use grid) or
+                  'none'. Capitalized names are deprecated aliases of the lowercase forms.
                 type: string
-                enum: ["center", "grid", "eq_grid", "gq_grid", "polar_grid", "cgi",
+                enum: ["none", "center", "grid", "eq_grid", "gq_grid", "polar_grid", "cgi",
                        "gaussian_overlap", "area_overlap",
                        "Center", "Avg_Deficit", "EqGrid", "GQGrid", "PolarGrid", "CGI"]
               n:
