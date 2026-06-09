@@ -77,6 +77,67 @@ properties:
               A:
                 title: TurboNOJ wake expansion parameter
                 type: number
+              fuga:
+                title: FUGA LUT generation parameters
+                description: >-
+                  Options for on-the-fly Fuga look-up-table generation (pyfuga).
+                  Fuga has no turbulence-intensity input, so ambient turbulence
+                  enters through the roughness z0 and stability zeta0. When z0 is
+                  not given it is derived from the site TI. By default a sweep of
+                  LUTs across the site TI distribution is generated so the wake
+                  honors per-flow-case TI. All omitted fields fall back to WIFA
+                  defaults.
+                type: object
+                properties:
+                  z0:
+                    title: Roughness length(s) (m)
+                    description: Single roughness, or an explicit list of roughnesses for the LUT sweep. Overrides the TI-derived z0.
+                    oneOf:
+                      - type: number
+                      - type: array
+                        items:
+                          type: number
+                  zi:
+                    title: Atmospheric inversion / boundary-layer height (m)
+                    type: number
+                  zeta0:
+                    title: Monin-Obukhov stability parameter z0/L (0 = neutral)
+                    type: number
+                  n_z0:
+                    title: Number of z0 LUTs in the TI sweep (1 = single mean-TI LUT)
+                    type: integer
+                  ti_min:
+                    title: Lower TI clamp for the z0 sweep (keeps z0 physical)
+                    type: number
+                  ti_max:
+                    title: Upper TI clamp for the z0 sweep (keeps z0 physical)
+                    type: number
+                  ti_qlo:
+                    title: Lower TI quantile spanned by the sweep
+                    type: number
+                  ti_qhi:
+                    title: Upper TI quantile spanned by the sweep
+                    type: number
+                  nkz0:
+                    title: pyfuga spectral density (wavenumbers per log decade)
+                    type: integer
+                  nbeta:
+                    title: pyfuga azimuthal resolution
+                    type: integer
+                  nx:
+                    title: LUT streamwise grid points
+                    type: integer
+                  ny:
+                    title: LUT cross-stream grid points
+                    type: integer
+                  lut_vars:
+                    title: LUT field components to compute (e.g. ["UL"])
+                    type: array
+                    items:
+                      type: string
+                  cache_dir:
+                    title: Directory for generated/cached LUTs
+                    type: string
 
           axial_induction_model:
               title: axial induction model
