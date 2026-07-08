@@ -138,6 +138,9 @@ properties:
                   cache_dir:
                     title: Directory for generated/cached LUTs
                     type: string
+                  n_cpu:
+                    title: Worker processes for LUT generation (1 = in-process)
+                    type: integer
 
           axial_induction_model:
               title: axial induction model
