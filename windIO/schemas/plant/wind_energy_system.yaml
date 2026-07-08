@@ -56,6 +56,7 @@ properties:
                        "TurboNOJ", "GCL", "FUGA"]
               wake_expansion_coefficient:
                 title: wake expansion coefficient
+                description: Wake expansion k = k_a + k_b * TI (k_a = constant expansion, k_b = coefficient on turbulence intensity).
                 type: object
                 properties:
                    k_a:
@@ -66,7 +67,7 @@ properties:
                       type: number # (default 0)
                    free_stream_ti:
                       title: Flag deciding to use freestream or waked TI
-                      description: TI feeding the wake-expansion coefficient (k = k_a*TI + k_b) and TI-dependent deficits. False (default) = waked/effective TI; True = freestream TI.
+                      description: TI feeding the wake-expansion coefficient (k = k_a + k_b*TI) and TI-dependent deficits. False (default) = waked/effective TI; True = freestream TI.
                       type: boolean # (default to False)
               ceps:
                 title: Bastankhah c_epsilon factor
