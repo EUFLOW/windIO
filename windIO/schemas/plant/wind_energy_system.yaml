@@ -270,6 +270,16 @@ properties:
               ss_alpha:
                 title: ss_alpha factor for SelfSimilarityDeficit2020
                 type: number
+              ground_mirror:
+                title: Mirror the blockage model in the ground plane
+                description: Enforce the ground (slip) boundary condition on the
+                  blockage deficit by adding an image rotor below ground
+                  (method of images). Applies to the blockage model only; wake
+                  deficit models are typically calibrated including ground
+                  effects and must not be mirrored. Ignored for FUGA, whose
+                  look-up tables already include the ground. Default false.
+                type: boolean
+                default: false
 
           HPC_config:
             title: Information to handle parallel runs on HPC clusters
