@@ -53,7 +53,7 @@ properties:
                 type: string
                 enum: ["Jensen", "Jensen_1983", "Bastankhah2014", "Bastankhah2016", "Niayifar2016", "Zong2020",
                        "Carbajofuertes2018", "SuperGaussian", "SuperGaussian2023", "TurbOPark",
-                       "TurboNOJ", "GCL", "FUGA"]
+                       "TurboNOJ", "GCL", "FUGA", "EddyViscosity"]
               wake_expansion_coefficient:
                 title: wake expansion coefficient
                 description: Wake expansion k = k_a + k_b * TI (k_a = constant expansion, k_b = coefficient on turbulence intensity).
@@ -170,7 +170,7 @@ properties:
               name:
                 title: Turbulence model name
                 type: string
-                enum: ["STF2005", "STF2017", "IEC-TI-2019", "CrespoHernandez", "GCL", "None"]
+                enum: ["STF2005", "STF2017", "IEC-TI-2019", "CrespoHernandez", "GCL", "QuartonAndAinslie", "None"]
                 # Q: IEC versus Franson
                 # note: We assume same shape as wind deficit for now
               coefficients:
@@ -219,13 +219,15 @@ properties:
                   Engine-neutral: none (no rotor-averaging model — rotor centre,
                   the only non-node option 'Weighted' superposition accepts),
                   center, grid (regular rotor grid / GridRotorAvg),
-                  eq_grid, gq_grid, polar_grid, cgi, gaussian_overlap, area_overlap.
+                  eq_grid, gq_grid, polar_grid, cgi, gaussian_overlap, area_overlap,
+                  simplified_gaussian (LUT-based line average, the Eddy Viscosity
+                  bundle's companion).
                   gaussian_overlap/area_overlap are non-node overlap models — NOT compatible
                   with 'Weighted' superposition, which requires a node model (use grid) or
                   'none'. Capitalized names are deprecated aliases of the lowercase forms.
                 type: string
                 enum: ["none", "center", "grid", "eq_grid", "gq_grid", "polar_grid", "cgi",
-                       "gaussian_overlap", "area_overlap",
+                       "gaussian_overlap", "area_overlap", "simplified_gaussian",
                        "Center", "Avg_Deficit", "EqGrid", "GQGrid", "PolarGrid", "CGI"]
               n:
                 title: Number of grid or integration points
