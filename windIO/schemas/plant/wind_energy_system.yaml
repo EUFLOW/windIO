@@ -391,6 +391,25 @@ properties:
                 title: APM grid filter length
                 type: number # (default 1.e3)
 
+          abl_setup:
+            title: settings for the ABL setup from height-resolved wind resources
+            description: how the atmospheric perturbation model derives its background ABL from a height-resolved wind resource with mesoscale surface scalars (see wayve's abl_setup.mesoscale_based); ignored by scalar and turbulence-profile inputs
+            type: object
+            properties:
+              Gmode:
+                title: geostrophic wind mode
+                description: how the free-atmosphere velocity is derived from the profiles — at the inversion center ("h1"), at the inversion top ("h2"), averaged between the inversion and 5 km ("avg", needs profiles reaching 5 km), or averaged to the tropopause ("trop", needs profiles reaching the stratosphere)
+                type: string
+                enum: ["h1", "h2", "avg", "trop"]  # (default "avg")
+              dh_max:
+                title: maximum inversion-layer depth
+                description: maximum depth of the inversion layer used in the inversion curve fit
+                type: number
+              serz:
+                title: surface-extended Rampanelli-Zardi
+                description: whether the surface-extended version of the Rampanelli-Zardi inversion fit is used
+                type: boolean # (default True)
+
           wm_coupling:
             title: settings for wake model coupling in high-fidelity atmospheric models
             type: object
