@@ -122,6 +122,23 @@ properties:
           $ref: "./common.yaml#/definitions/multi_dimensional_data"
         ABL_height:
             title: atmoshpheric boundary layer height
+            description: >-
+              Height of the centre of the capping inversion, i.e. the top of
+              the well-mixed boundary layer.  Together with
+              capping_inversion_thickness it bounds the inversion layer
+              (bottom = ABL_height - thickness/2, top = ABL_height +
+              thickness/2).  Distinct from boundary_layer_height, which is a
+              reanalysis surface diagnostic.
+            $ref: "./common.yaml#/definitions/multi_dimensional_data"
+        boundary_layer_height:
+            title: Reanalysis boundary-layer height (m)
+            description: >-
+              Boundary-layer height as diagnosed by a mesoscale model or
+              reanalysis (e.g. ERA5 blh).  Used together with
+              friction_velocity and LMO to build the surface-driven
+              turbulence closure of a height-resolved wind resource.  It is
+              a model diagnostic, not the fitted inversion height -- see
+              ABL_height.
             $ref: "./common.yaml#/definitions/multi_dimensional_data"
         capping_inversion_thickness:
             title: Capping inversion thickness in units of meters
