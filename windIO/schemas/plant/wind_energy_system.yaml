@@ -339,7 +339,10 @@ properties:
                 title: height of the layer containing the farm
                 type: number
               number_of_fa_layers:
-                title: number of layers in the free atmosphere
+                title: >-
+                  number of layers in the free atmosphere; 1 requests a bulk
+                  (uniform) free atmosphere, and a value <= 0 resolves it on
+                  the vertical grid of the wind resource profiles
                 type: integer
 
           APM_additional_terms:
