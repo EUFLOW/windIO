@@ -53,9 +53,10 @@ properties:
                 type: string
                 enum: ["Jensen", "Jensen_1983", "Bastankhah2014", "Bastankhah2016", "Niayifar2016", "Zong2020",
                        "Carbajofuertes2018", "SuperGaussian", "SuperGaussian2023", "TurbOPark",
-                       "TurboNOJ", "GCL", "FUGA"]
+                       "TurboNOJ", "GCL", "FUGA", "EddyViscosity"]
               wake_expansion_coefficient:
                 title: wake expansion coefficient
+                description: Wake expansion k = k_a + k_b * TI (k_a = constant expansion, k_b = coefficient on turbulence intensity).
                 type: object
                 properties:
                    k_a:
@@ -66,19 +67,81 @@ properties:
                       type: number # (default 0)
                    free_stream_ti:
                       title: Flag deciding to use freestream or waked TI
+                      description: TI feeding the wake-expansion coefficient (k = k_a + k_b*TI) and TI-dependent deficits. False (default) = waked/effective TI; True = freestream TI.
                       type: boolean # (default to False)
               ceps:
                 title: Bastankhah c_epsilon factor
                 type: number
               use_effective_ws:
-                title: flag to use freestream wind speed for deficit computation
-                type: boolean
-              use_effective_ti:
-                title: flag to use effective turbulence intensity
+                title: flag to use local (effective) wind speed for deficit computation (True=waked, False=freestream)
                 type: boolean
               A:
                 title: TurboNOJ wake expansion parameter
                 type: number
+              fuga:
+                title: FUGA LUT generation parameters
+                description: >-
+                  Options for on-the-fly Fuga look-up-table generation (pyfuga).
+                  Fuga has no turbulence-intensity input, so ambient turbulence
+                  enters through the roughness z0 and stability zeta0. When z0 is
+                  not given it is derived from the site TI. By default a sweep of
+                  LUTs across the site TI distribution is generated so the wake
+                  honors per-flow-case TI. All omitted fields fall back to WIFA
+                  defaults.
+                type: object
+                properties:
+                  z0:
+                    title: Roughness length(s) (m)
+                    description: Single roughness, or an explicit list of roughnesses for the LUT sweep. Overrides the TI-derived z0.
+                    oneOf:
+                      - type: number
+                      - type: array
+                        items:
+                          type: number
+                  zi:
+                    title: Atmospheric inversion / boundary-layer height (m)
+                    type: number
+                  zeta0:
+                    title: Monin-Obukhov stability parameter z0/L (0 = neutral)
+                    type: number
+                  n_z0:
+                    title: Number of z0 LUTs in the TI sweep (1 = single mean-TI LUT)
+                    type: integer
+                  ti_min:
+                    title: Lower TI clamp for the z0 sweep (keeps z0 physical)
+                    type: number
+                  ti_max:
+                    title: Upper TI clamp for the z0 sweep (keeps z0 physical)
+                    type: number
+                  ti_qlo:
+                    title: Lower TI quantile spanned by the sweep
+                    type: number
+                  ti_qhi:
+                    title: Upper TI quantile spanned by the sweep
+                    type: number
+                  nkz0:
+                    title: pyfuga spectral density (wavenumbers per log decade)
+                    type: integer
+                  nbeta:
+                    title: pyfuga azimuthal resolution
+                    type: integer
+                  nx:
+                    title: LUT streamwise grid points
+                    type: integer
+                  ny:
+                    title: LUT cross-stream grid points
+                    type: integer
+                  lut_vars:
+                    title: LUT field components to compute (e.g. ["UL"])
+                    type: array
+                    items:
+                      type: string
+                  cache_dir:
+                    title: Directory for generated/cached LUTs
+                    type: string
+                  n_cpu:
+                    title: Worker processes for LUT generation (1 = in-process)
+                    type: integer
 
           axial_induction_model:
               title: axial induction model
@@ -107,18 +170,29 @@ properties:
               name:
                 title: Turbulence model name
                 type: string
-                enum: ["STF2005", "STF2017", "IEC-TI-2019", "CrespoHernandez", "GCL", "None"]
+                enum: ["STF2005", "STF2017", "IEC-TI-2019", "CrespoHernandez", "GCL", "QuartonAndAinslie", "None"]
                 # Q: IEC versus Franson
                 # note: We assume same shape as wind deficit for now
               coefficients:
                 title: coefficients
                 type: array
+              c0:
+                title: STF/IEC model coefficient 0
+                type: number
               c1:
                 title: STF model coefficient 1
                 type: number
               c2:
                 title: STF model coefficient 2
                 type: number
+              c:
+                title: CrespoHernandez coefficients
+                description: >-
+                  Calibration coefficients [c0, c1, c2, c3] for the CrespoHernandez
+                  added-turbulence model. When given, the model is built with these
+                  coefficients (engine-specific), reproducing a paper's calibration
+                  (e.g. Niayifar/Zong); when omitted the engine default is used.
+                type: array
 
           superposition_model:
             title: Superposition model
@@ -128,7 +202,7 @@ properties:
               ws_superposition:
                 title: Speed superposition model name
                 type: string
-                enum: ["Linear", "Squared", "Max", "Product", "Weighted", "Cumulative"]
+                enum: ["Linear", "Squared", "Max", "Product", "Weighted", "Cumulative", "Vector"]
               ti_superposition:
                 title: TI superposition model name
                 type: string
@@ -141,8 +215,20 @@ properties:
             properties:
               name:
                 title: Rotor averaging model name
+                description: >-
+                  Engine-neutral: none (no rotor-averaging model — rotor centre,
+                  the only non-node option 'Weighted' superposition accepts),
+                  center, grid (regular rotor grid / GridRotorAvg),
+                  eq_grid, gq_grid, polar_grid, cgi, gaussian_overlap, area_overlap,
+                  simplified_gaussian (LUT-based line average, the Eddy Viscosity
+                  bundle's companion).
+                  gaussian_overlap/area_overlap are non-node overlap models — NOT compatible
+                  with 'Weighted' superposition, which requires a node model (use grid) or
+                  'none'. Capitalized names are deprecated aliases of the lowercase forms.
                 type: string
-                enum: ["Center", "Avg_Deficit", "EqGrid", "GQGrid", "PolarGrid", "CGI"]
+                enum: ["none", "center", "grid", "eq_grid", "gq_grid", "polar_grid", "cgi",
+                       "gaussian_overlap", "area_overlap", "simplified_gaussian",
+                       "Center", "Avg_Deficit", "EqGrid", "GQGrid", "PolarGrid", "CGI"]
               n:
                 title: Number of grid or integration points
                 type: integer
@@ -186,6 +272,16 @@ properties:
               ss_alpha:
                 title: ss_alpha factor for SelfSimilarityDeficit2020
                 type: number
+              ground_mirror:
+                title: Mirror the blockage model in the ground plane
+                description: Enforce the ground (slip) boundary condition on the
+                  blockage deficit by adding an image rotor below ground
+                  (method of images). Applies to the blockage model only; wake
+                  deficit models are typically calibrated including ground
+                  effects and must not be mirrored. Ignored for FUGA, whose
+                  look-up tables already include the ground. Default false.
+                type: boolean
+                default: false
 
           HPC_config:
             title: Information to handle parallel runs on HPC clusters
@@ -243,7 +339,10 @@ properties:
                 title: height of the layer containing the farm
                 type: number
               number_of_fa_layers:
-                title: number of layers in the free atmosphere
+                title: >-
+                  number of layers in the free atmosphere; 1 requests a bulk
+                  (uniform) free atmosphere, and a value <= 0 resolves it on
+                  the vertical grid of the wind resource profiles
                 type: integer
 
           APM_additional_terms:
@@ -294,6 +393,25 @@ properties:
               L_filter:
                 title: APM grid filter length
                 type: number # (default 1.e3)
+
+          abl_setup:
+            title: settings for the ABL setup from height-resolved wind resources
+            description: how the atmospheric perturbation model derives its background ABL from a height-resolved wind resource with mesoscale surface scalars (see wayve's abl_setup.mesoscale_based); ignored by scalar and turbulence-profile inputs
+            type: object
+            properties:
+              Gmode:
+                title: geostrophic wind mode
+                description: how the free-atmosphere velocity is derived from the profiles — at the inversion center ("h1"), at the inversion top ("h2"), averaged between the inversion and 5 km ("avg", needs profiles reaching 5 km), or averaged to the tropopause ("trop", needs profiles reaching the stratosphere)
+                type: string
+                enum: ["h1", "h2", "avg", "trop"]  # (default "avg")
+              dh_max:
+                title: maximum inversion-layer depth
+                description: maximum depth of the inversion layer used in the inversion curve fit
+                type: number
+              serz:
+                title: surface-extended Rampanelli-Zardi
+                description: whether the surface-extended version of the Rampanelli-Zardi inversion fit is used
+                type: boolean # (default True)
 
           wm_coupling:
             title: settings for wake model coupling in high-fidelity atmospheric models

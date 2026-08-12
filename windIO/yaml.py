@@ -19,22 +19,35 @@ def _fmt(v: Any) -> dict | list | str | float | int:
         v (Any): Initially, a dictionary of inputs to format. Then, individual
             values within the dictionary.
     """
+    if isinstance(v, np.ndarray):
+        # Keep arrays as-is; the elementwise ``!= {}`` below is unsafe on arrays.
+        return v
     if isinstance(v, dict):
-        return {k: _fmt(v) for k, v in v.items() if _fmt(v) != {}}
+        out = {}
+        for k, val in v.items():
+            fval = _fmt(val)
+            if not (isinstance(fval, dict) and len(fval) == 0):
+                out[k] = fval
+        return out
     elif isinstance(v, tuple):
         return list(v)
     else:
         return v
 
 
-def _ds2yml(ds: xr.Dataset) -> dict:
+def _ds2yml(ds: xr.Dataset, data: str = "list") -> dict:
     """
     Converts the input xr.Dataset to a format compatible with yaml.load.
 
     Args:
         ds (xr.Dataset): NetCDF data loaded as a xr.Dataset
+        data (str): How array data is represented, forwarded to
+            ``xr.Dataset.to_dict``.  ``"list"`` (default) yields nested Python
+            lists (YAML/JSON friendly).  ``"array"`` keeps numpy arrays, avoiding
+            the ~4-28x memory blow-up of lists for large included netCDF
+            resources (not YAML-serialisable; use with structure-only validation).
     """
-    d = ds.to_dict()
+    d = ds.to_dict(data=data)
     return _fmt(
         {
             **{k: v["data"] for k, v in d["coords"].items()},
@@ -49,6 +62,7 @@ def _get_YAML(
     read_numpy: bool = False,
     read_include: bool = True,
     n_list_flow_style: int = 1,
+    nc_data: str = "list",
 ) -> YAML:
     """Get `ruamel.yaml.YAML` instance default setting for windIO
 
@@ -128,11 +142,10 @@ def _get_YAML(
             filename = Path(constructor.loader.reader.stream.name).parent / node.value
             ext = os.path.splitext(filename)[1].lower()
             if ext in [".yaml", ".yml"]:
-                return load_yaml(
-                    filename, _get_YAML()
-                )  # TODO: Make `get_YAML()` dynamic to make it possible to update
+                # Propagate nc_data so nested includes keep the same array mode.
+                return load_yaml(filename, _get_YAML(nc_data=nc_data))
             elif ext in [".nc"]:
-                return _ds2yml(xr.open_dataset(filename))
+                return _ds2yml(xr.open_dataset(filename), data=nc_data)
             else:
                 raise ValueError(f"Unsupported file extension: {ext}")
 
@@ -141,7 +154,9 @@ def _get_YAML(
     return yaml_obj
 
 
-def load_yaml(filename: str | Path | os.PathLike, loader=None) -> dict:
+def load_yaml(
+    filename: str | Path | os.PathLike, loader=None, nc_data: str = "list"
+) -> dict:
     """
     Opens ``filename`` and loads the content into a dictionary with the ``_get_YAML``
     function from ruamel.yaml.YAML.
@@ -149,12 +164,16 @@ def load_yaml(filename: str | Path | os.PathLike, loader=None) -> dict:
     Args:
         filename (str | Path | os.PathLike): Path or file-handle to the local file to be loaded or string path to the file.
         loader (ruamel.yaml.YAML, optional): Defaults to SafeLoader.
+        nc_data (str, optional): How ``!include`` netCDF data is represented;
+            ``"list"`` (default) for nested Python lists, ``"array"`` to keep
+            numpy arrays (memory-efficient; requires structure-only validation).
+            Ignored when an explicit ``loader`` is given.
 
     Returns:
         dict: Dictionary representation of the YAML file given in ``filename``.
     """
     if loader is None:
-        loader = _get_YAML()
+        loader = _get_YAML(nc_data=nc_data)
 
     if isinstance(filename, str):
         filename = Path(filename)

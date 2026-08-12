@@ -6,9 +6,28 @@ from referencing.exceptions import NoSuchResource
 import copy
 import jsonschema
 import jsonschema.validators
+import numpy as np
 
 from .yaml import load_yaml
 from .schemas import schemaPath, schema_validation_error_formatter
+
+
+def _structure_skeleton(obj):
+    """Return a copy of ``obj`` with numpy arrays replaced by ``[]``.
+
+    Used for structure-only validation of array-backed (memory-efficient)
+    inputs: jsonschema requires JSON types (it rejects numpy arrays and would
+    iterate every element of a large list).  Replacing each array with an empty
+    list keeps the surrounding structure (keys, ``dims``) validatable at O(1)
+    per variable while skipping element-wise checks of the bulk data.
+    """
+    if isinstance(obj, np.ndarray):
+        return []
+    if isinstance(obj, dict):
+        return {k: _structure_skeleton(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_structure_skeleton(v) for v in obj]
+    return obj
 
 
 def retrieve_yaml(uri: str):
@@ -51,7 +70,8 @@ def _enforce_no_additional_properties(schema):
 
 
 def validate(
-    input: dict | str | Path, schema_type: str, restrictive: bool = True, defaults: bool = False,
+    input: dict | str | Path, schema_type: str, restrictive: bool = True,
+    defaults: bool = False, array_data: bool = False,
 ) -> None:
     """
     Validates a given windIO input based on the selected schema type.
@@ -65,8 +85,13 @@ def validate(
             'turbine/turbine_schema'.
         restrictive (bool, optional): If True, the schema will be modified to enforce
             that no additional properties are allowed. Defaults to True.
-        defaults (bool, optional): If True, default values specified in the schema will 
+        defaults (bool, optional): If True, default values specified in the schema will
             be applied to the input data during validation. Defaults to False.
+        array_data (bool, optional): If True, validate structure only: numpy
+            arrays (from an array-backed ``!include`` netCDF, or an already
+            array-backed dict) are replaced by ``[]`` so jsonschema checks keys
+            and ``dims`` without materialising/iterating the bulk data.  Avoids
+            the dict-of-lists memory blow-up for large resources. Defaults to False.
 
     Raises:
         FileNotFoundError: If the schema file corresponding to the schema type is not found.
@@ -84,9 +109,12 @@ def validate(
         raise FileNotFoundError(f"Schema file {schema_file} not found.")
 
     if type(input) is dict:
-        data = copy.deepcopy(input)
+        data = _structure_skeleton(input) if array_data else copy.deepcopy(input)
     elif type(input) in [str, Path, PosixPath, WindowsPath]:
-        data = load_yaml(input)
+        if array_data:
+            data = _structure_skeleton(load_yaml(input, nc_data="array"))
+        else:
+            data = load_yaml(input)
     else:
         raise TypeError(f"Input type {type(input)} is not supported.")
 
